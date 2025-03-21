@@ -1,0 +1,38 @@
+syntax = "proto3";
+
+option csharp_namespace = "Grpc";
+
+package greet;
+
+// The greeting service definition.
+service Greeter {
+  // Sends a greeting
+  rpc SayHello (HelloRequest) returns (HelloReply);
+  rpc SayHelloStream (stream HelloRequest) returns (stream HelloReply);
+}
+
+// The request message containing the user's name.
+message HelloRequest {
+  string name = 1;
+}
+
+// The response message containing the greetings.
+message HelloReply {
+  string message = 1;
+}
+
+service SystemMetrics {
+	rpc GetMetricsStream (stream MetrixRequest) returns (stream MetricsResponse);
+}
+
+message MetrixRequest {
+
+}
+
+message MetricsResponse {
+  float cpu_usage = 1;
+  float available_memory_mb = 2;
+  float total_memory_mb = 3;
+  float free_disk_space_gb = 4;
+  float total_disk_space_gb = 5;
+}
