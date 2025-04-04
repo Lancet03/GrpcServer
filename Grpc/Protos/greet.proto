@@ -9,6 +9,7 @@ service Greeter {
   // Sends a greeting
   rpc SayHello (HelloRequest) returns (HelloReply);
   rpc SayHelloStream (stream HelloRequest) returns (stream HelloReply);
+  rpc GetMetrics (MetrixRequest) returns (MetricsResponse);
 }
 
 // The request message containing the user's name.
@@ -19,10 +20,6 @@ message HelloRequest {
 // The response message containing the greetings.
 message HelloReply {
   string message = 1;
-}
-
-service SystemMetrics {
-	rpc GetMetricsStream (stream MetrixRequest) returns (stream MetricsResponse);
 }
 
 message MetrixRequest {

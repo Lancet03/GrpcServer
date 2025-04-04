@@ -35,58 +35,45 @@ namespace Grpc.Services
             }
         }
 
-
-
+        public override Task<MetricsResponse> GetMetrics(MetrixRequest request, ServerCallContext context)
+        {
+            MetricsService metricsService = new MetricsService();
+            float cpuUsage = metricsService.GetCpuUsage();
+            float availableMemory = metricsService.GetAvailableMemory();
+            float totalMemory = metricsService.GetTotalMemory();
+            (float freeDisk, float totalDisk) = metricsService.GetDiskUsage();
+            return Task.FromResult(new MetricsResponse()
+            {
+                CpuUsage = cpuUsage,
+                AvailableMemoryMb = availableMemory,
+                TotalMemoryMb = totalMemory,
+                FreeDiskSpaceGb = freeDisk,
+                TotalDiskSpaceGb = totalDisk
+            });
+        }
     }
 
-    public class MetricsService : SystemMetrics.SystemMetricsBase
+    public class MetricsService
     {
-        private readonly ILogger<MetricsService> _logger;
-        public MetricsService(ILogger<MetricsService> logger)
-        {
-            _logger = logger;
-        }
-
-        public override async Task GetMetricsStream(IAsyncStreamReader<MetrixRequest> requestStream,
-           IServerStreamWriter<MetricsResponse> replyStream, ServerCallContext context)
-        {
-            await foreach (var request in requestStream.ReadAllAsync())
-            {
-                float cpuUsage = GetCpuUsage();
-                float availableMemory = GetAvailableMemory();
-                float totalMemory = GetTotalMemory();
-                (float freeDisk, float totalDisk) = GetDiskUsage();
-
-                await replyStream.WriteAsync(new MetricsResponse()
-                {
-                    CpuUsage = cpuUsage,
-                    AvailableMemoryMb = availableMemory,
-                    TotalMemoryMb = totalMemory,
-                    FreeDiskSpaceGb = freeDisk,
-                    TotalDiskSpaceGb = totalDisk
-                });
-            }
-        }
-
-        private float GetCpuUsage()
+        public float GetCpuUsage()
         {
             var searcher = new ManagementObjectSearcher("SELECT LoadPercentage FROM Win32_Processor");
             return searcher.Get().Cast<ManagementObject>().Select(m => Convert.ToSingle(m["LoadPercentage"])).FirstOrDefault();
         }
 
-        private float GetAvailableMemory()
+        public float GetAvailableMemory()
         {
             var searcher = new ManagementObjectSearcher("SELECT FreePhysicalMemory FROM Win32_OperatingSystem");
             return searcher.Get().Cast<ManagementObject>().Select(m => Convert.ToSingle(m["FreePhysicalMemory"]) / 1024).FirstOrDefault();
         }
 
-        private float GetTotalMemory()
+        public float GetTotalMemory()
         {
             var searcher = new ManagementObjectSearcher("SELECT TotalVisibleMemorySize FROM Win32_OperatingSystem");
             return searcher.Get().Cast<ManagementObject>().Select(m => Convert.ToSingle(m["TotalVisibleMemorySize"]) / 1024).FirstOrDefault();
         }
 
-        private (float freeDisk, float totalDisk) GetDiskUsage()
+        public (float freeDisk, float totalDisk) GetDiskUsage()
         {
             DriveInfo drive = DriveInfo.GetDrives().FirstOrDefault(d => d.IsReady);
             if (drive != null)
